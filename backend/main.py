@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from backend.database.dependencies import get_db
 from backend.database.init_db import init_db
 
+from backend.api.auth import router as auth_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +23,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+app.include_router(auth_router)
 
 @app.get("/health")
 def health_check():
