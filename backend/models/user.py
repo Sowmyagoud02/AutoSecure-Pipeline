@@ -1,5 +1,5 @@
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.models.base import Base
 
@@ -40,4 +40,9 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(
         default=True,
         nullable=False,
+    )
+
+    ingestions = relationship(
+    "Ingestion",
+    back_populates="user",
     )

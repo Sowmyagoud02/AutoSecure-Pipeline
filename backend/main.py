@@ -9,6 +9,7 @@ from backend.database.init_db import init_db
 
 from backend.api.auth import router as auth_router
 from backend.api.users import router as users_router
+from backend.api.ingestion import router as ingestion_router
 
 
 @asynccontextmanager
@@ -27,6 +28,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(ingestion_router)
 
 @app.get("/health")
 def health_check():
