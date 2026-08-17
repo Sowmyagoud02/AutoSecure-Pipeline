@@ -9,6 +9,7 @@ from backend.security.dependencies import get_current_user
 from backend.security.url_validator import UnsafeURLError, validate_url
 from backend.services.scraper_service import fetch_webpage, extract_text
 from backend.services.validation_service import validate_text
+from backend.services.security_service import analyze_content
 
 
 router = APIRouter(
@@ -67,7 +68,25 @@ def ingest_url(
                 "issues": validation_result.issues,
             }
 
+        security_result = analyze_content(text)
+
+        if not security_result.is_safe:
+            ingestion.security_status = "failed"
+            ingestion.processing_status = ProcessingStatus.FAILED
+
+            db.commit()
+
+            return {
+                "id": ingestion.id,
+                "source_url": ingestion.source_url,
+                "status": "failed",
+                "validation_status": "passed",
+                "security_status": "failed",
+                "security_issues": security_result.issues,
+            }
+
         ingestion.validation_status = "passed"
+        ingestion.security_status = "passed"
         ingestion.processing_status = ProcessingStatus.COMPLETED
 
         db.commit()
@@ -78,6 +97,7 @@ def ingest_url(
             "source_url": ingestion.source_url,
             "status": "completed",
             "validation_status": "passed",
+            "security_status": "passed",
             "text_length": validation_result.text_length,
             "text_preview": text[:500],
         }
