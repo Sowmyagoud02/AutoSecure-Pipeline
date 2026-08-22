@@ -10,6 +10,7 @@ from backend.security.url_validator import UnsafeURLError, validate_url
 from backend.services.scraper_service import fetch_webpage, extract_text
 from backend.services.validation_service import validate_text
 from backend.services.security_service import analyze_content
+from backend.services.ai_service import analyze_text
 
 
 router = APIRouter(
@@ -85,6 +86,22 @@ def ingest_url(
                 "security_issues": security_result.issues,
             }
 
+        try:
+            ai_result = analyze_text(text)
+
+            ingestion.ai_status = "passed"
+
+        except Exception as exc:
+            ingestion.ai_status = "failed"
+            ingestion.processing_status = ProcessingStatus.FAILED
+
+            db.commit()
+
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"AI analysis failed: {str(exc)}",
+            )
+
         ingestion.validation_status = "passed"
         ingestion.security_status = "passed"
         ingestion.processing_status = ProcessingStatus.COMPLETED
@@ -98,9 +115,16 @@ def ingest_url(
             "status": "completed",
             "validation_status": "passed",
             "security_status": "passed",
+            "ai_status": "passed",
+            "ai_summary": ai_result.summary,
+            "ai_category": ai_result.category,
+            "ai_confidence": ai_result.confidence,
             "text_length": validation_result.text_length,
             "text_preview": text[:500],
         }
+    
+    except HTTPException:
+        raise
 
     except Exception as exc:
         ingestion.processing_status = ProcessingStatus.FAILED

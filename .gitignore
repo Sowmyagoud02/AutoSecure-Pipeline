@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
